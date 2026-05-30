@@ -34,9 +34,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/wangshuo/album-assetizer"
-Repository = "https://github.com/wangshuo/album-assetizer"
-Issues = "https://github.com/wangshuo/album-assetizer/issues"
+Homepage = "https://github.com/SeanWong17/album-assetizer"
+Repository = "https://github.com/SeanWong17/album-assetizer"
+Issues = "https://github.com/SeanWong17/album-assetizer/issues"
 
 [project.scripts]
 album-assetizer = "album_assetizer.cli:main"
