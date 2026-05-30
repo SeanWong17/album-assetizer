@@ -124,7 +124,3 @@ album-assetizer/
 ## 社区
 
 本项目在 [LINUX DO](https://linux.do) 社区发布与推广，感谢社区佬友们的支持与反馈。
-
-## 社区
-
-本项目在 [LINUX DO](https://linux.do) 社区发布与推广，感谢社区佬友们的支持与反馈。
