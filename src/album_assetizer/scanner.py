@@ -31,6 +31,9 @@ DEFAULT_IGNORE_DIRS = {
     ".agents",
     "__pycache__",
     "album_captioner",
+    "album-assetizer",
+    "album-explorer",
+    "_album_migrations",
     ".album-assetizer",
 }
 

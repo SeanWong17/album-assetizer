@@ -13,6 +13,8 @@
 
 输出为标准格式（JSONL / CSV / SQLite），可直接用于下游检索、聚类、推荐等场景。下游应用不在本项目范围内，会作为独立项目提供。
 
+同时支持从图像 EXIF 中提取拍摄时间与 GPS 元数据，方便下游做时间线、城市筛选和地图可视化。
+
 ## 效果展示
 
 ![审阅页示例](docs/screenshots/Demo.png)
@@ -28,6 +30,7 @@ cp examples/sample.env .env
 
 # 使用
 album-assetizer --root /path/to/album scan       # 扫描素材
+album-assetizer --root /path/to/album sync-metadata  # 回填 EXIF 时间/GPS
 album-assetizer --root /path/to/album annotate   # 生成描述
 album-assetizer --root /path/to/album export     # 导出结果
 album-assetizer --root /path/to/album stats      # 查看统计
@@ -53,11 +56,15 @@ album-assetizer --root /path/to/album stats      # 查看统计
 | `people_count` | 人数（-1 表示无法判断） |
 | `confidence` | 置信度 (0-1) |
 | `embedding_text` | 拼接全字段的 embedding 文本 |
+| `taken_at` | EXIF 拍摄时间（ISO 8601） |
+| `gps_lat` / `gps_lng` | EXIF GPS 经纬度 |
+| `metadata_json` | 原始元数据摘要，便于下游继续处理 |
 
 ## 核心能力
 
 - 扫描本地相册，支持 JPG / PNG / HEIC / DNG / CR3 / LIVP（Apple Live Photo）
 - 图片预处理：缩放、格式转换、EXIF 校正、体积控制
+- EXIF 元数据提取：拍摄时间、GPS 经纬度
 - 调用 OpenAI 兼容 API，支持 Structured Output（json_schema）
 - 并发处理 + RPM 速率限制 + 自动扩缩容
 - 指数退避重试，错误分类（可重试 vs 永久失败）

@@ -84,6 +84,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("scan", help="扫描素材文件到本地状态库")
     subparsers.add_parser("run", help="扫描并处理待标注素材")
     subparsers.add_parser("refine-done", help="对已完成结果进行二轮文本精修")
+    sync_metadata = subparsers.add_parser("sync-metadata", help="读取 EXIF/GPS 元数据并写入本地状态库")
+    sync_metadata.add_argument("--all", action="store_true", help="重跑全部素材，不只处理缺失元数据的记录")
+    sync_metadata.add_argument("--limit", type=int, default=None, help="限制本次处理的素材数量")
     subparsers.add_parser("stats", help="查看当前处理统计")
     subparsers.add_parser("export", help="导出 JSONL/CSV/失败列表")
 
@@ -264,6 +267,16 @@ def main() -> int:
             refine_done_results(conn, cfg)
             counts = get_status_counts(conn)
             print(json.dumps({"command": "refine-done", "counts": counts}, ensure_ascii=False))
+
+        elif args.command == "sync-metadata":
+            from album_assetizer.metadata import sync_asset_metadata
+            stats = sync_asset_metadata(
+                conn,
+                only_missing=not args.all,
+                limit=args.limit,
+            )
+            counts = get_status_counts(conn)
+            print(json.dumps({"command": "sync-metadata", "sync": stats, "counts": counts}, ensure_ascii=False))
 
         elif args.command == "stats":
             counts = get_status_counts(conn)

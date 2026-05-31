@@ -42,6 +42,12 @@ def init_db(conn: sqlite3.Connection) -> None:
             prepared_width INTEGER,
             prepared_height INTEGER,
             prepared_bytes INTEGER,
+            taken_at TEXT,
+            gps_lat REAL,
+            gps_lng REAL,
+            metadata_json TEXT,
+            metadata_error TEXT,
+            metadata_updated_at TEXT,
             original_result_json TEXT,
             result_json TEXT,
             usage_json TEXT,
@@ -60,6 +66,18 @@ def init_db(conn: sqlite3.Connection) -> None:
     columns = {row["name"] for row in conn.execute("PRAGMA table_info(assets)").fetchall()}
     if "original_result_json" not in columns:
         conn.execute("ALTER TABLE assets ADD COLUMN original_result_json TEXT")
+    if "taken_at" not in columns:
+        conn.execute("ALTER TABLE assets ADD COLUMN taken_at TEXT")
+    if "gps_lat" not in columns:
+        conn.execute("ALTER TABLE assets ADD COLUMN gps_lat REAL")
+    if "gps_lng" not in columns:
+        conn.execute("ALTER TABLE assets ADD COLUMN gps_lng REAL")
+    if "metadata_json" not in columns:
+        conn.execute("ALTER TABLE assets ADD COLUMN metadata_json TEXT")
+    if "metadata_error" not in columns:
+        conn.execute("ALTER TABLE assets ADD COLUMN metadata_error TEXT")
+    if "metadata_updated_at" not in columns:
+        conn.execute("ALTER TABLE assets ADD COLUMN metadata_updated_at TEXT")
     conn.commit()
 
 

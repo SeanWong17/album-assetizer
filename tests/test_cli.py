@@ -72,6 +72,13 @@ class CliTests(unittest.TestCase):
             results_jsonl = Path(tmpdir) / payload["results_jsonl"]
             self.assertTrue(results_jsonl.exists())
 
+    def test_sync_metadata_on_empty_db(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            proc = self.run_cli("--root", tmpdir, "sync-metadata")
+            payload = json.loads(proc.stdout)
+            self.assertEqual(payload["command"], "sync-metadata")
+            self.assertEqual(payload["sync"]["total"], 0)
+
     def test_run_requires_api_key(self) -> None:
         """run 命令在没有 API key 时应以非零退出码退出。"""
         import os

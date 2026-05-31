@@ -41,8 +41,8 @@ def export_asset_results(conn: sqlite3.Connection, export_dir: Path) -> dict[str
         """
         SELECT asset_id, rel_path, asset_type, source_format, companion_video, status,
                attempts, completed_at, model_used, prepared_width, prepared_height,
-               prepared_bytes, original_result_json, result_json, usage_json,
-               last_error_type, last_error
+               prepared_bytes, taken_at, gps_lat, gps_lng, metadata_json,
+               original_result_json, result_json, usage_json, last_error_type, last_error
         FROM assets
         ORDER BY asset_id
         """
@@ -69,6 +69,10 @@ def export_asset_results(conn: sqlite3.Connection, export_dir: Path) -> dict[str
                 "prepared_width",
                 "prepared_height",
                 "prepared_bytes",
+                "taken_at",
+                "gps_lat",
+                "gps_lng",
+                "metadata_json",
                 "has_original_result_snapshot",
                 "caption_short",
                 "scene",
@@ -93,6 +97,7 @@ def export_asset_results(conn: sqlite3.Connection, export_dir: Path) -> dict[str
             original_result_json = json.loads(row["original_result_json"]) if row["original_result_json"] else {}
             result_json = json.loads(row["result_json"]) if row["result_json"] else {}
             usage_json = json.loads(row["usage_json"]) if row["usage_json"] else {}
+            metadata_json = json.loads(row["metadata_json"]) if row["metadata_json"] else {}
             payload = {
                 "asset_id": row["asset_id"],
                 "rel_path": row["rel_path"],
@@ -106,6 +111,10 @@ def export_asset_results(conn: sqlite3.Connection, export_dir: Path) -> dict[str
                 "prepared_width": row["prepared_width"],
                 "prepared_height": row["prepared_height"],
                 "prepared_bytes": row["prepared_bytes"],
+                "taken_at": row["taken_at"],
+                "gps_lat": row["gps_lat"],
+                "gps_lng": row["gps_lng"],
+                "metadata": metadata_json,
                 "original_result": original_result_json,
                 "result": result_json,
                 "usage": usage_json,
@@ -144,6 +153,10 @@ def export_asset_results(conn: sqlite3.Connection, export_dir: Path) -> dict[str
                     "prepared_width": row["prepared_width"],
                     "prepared_height": row["prepared_height"],
                     "prepared_bytes": row["prepared_bytes"],
+                    "taken_at": row["taken_at"],
+                    "gps_lat": row["gps_lat"],
+                    "gps_lng": row["gps_lng"],
+                    "metadata_json": stable_json_dumps(metadata_json) if metadata_json else "",
                     "has_original_result_snapshot": bool(original_result_json),
                     "caption_short": result_json.get("caption_short", ""),
                     "scene": result_json.get("scene", ""),
