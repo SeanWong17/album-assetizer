@@ -305,9 +305,8 @@ class TestTextRefineRateLimiting(unittest.TestCase):
                 capabilities=capabilities, rate_limiter=rate_limiter,
             )
 
-        # rate_limiter.acquire 应被调用至少 1 次（精修时）
-        # 注意：首次 acquire 在 worker 中调用，这里只验证精修的 acquire
-        self.assertGreaterEqual(rate_limiter.acquire.call_count, 1)
+        # 精修时 rate_limiter.acquire 应被调用恰好 1 次（视觉调用的 acquire 在 worker 中）
+        self.assertEqual(rate_limiter.acquire.call_count, 1)
 
     def test_no_refine_no_extra_acquire(self):
         """text_refine_model=None 时 rate_limiter 不应被 acquire。"""
@@ -351,6 +350,67 @@ class TestTextRefineRateLimiting(unittest.TestCase):
             )
 
         rate_limiter.acquire.assert_not_called()
+
+    def test_refine_failure_returns_unrefined_result(self):
+        """精修耗尽重试后应返回未精修的视觉结果，不抛异常。"""
+        from unittest.mock import MagicMock, patch, call
+        from openai import APIConnectionError
+
+        from album_assetizer.api import call_model_with_fallback, ApiCapabilities
+        from album_assetizer.models import PreparedImage
+
+        class FakeCfg:
+            model = "test-model"
+            text_refine_model = "refine-model"
+            base_url = ""
+            api_key = "fake"
+            request_timeout = 30
+            max_retries = 1
+            retry_base_seconds = 0.001
+            retry_max_seconds = 0.01
+
+        cfg = FakeCfg()
+        prepared = PreparedImage(jpeg_bytes=b"\xff\xd8\xff", width=100, height=100,
+                                 mime_type="image/jpeg", source_note="test")
+        capabilities = ApiCapabilities()
+        rate_limiter = MagicMock()
+        rate_limiter.acquire = MagicMock()
+        rate_limiter.stop_event = None
+
+        # 视觉调用成功
+        fake_response = MagicMock()
+        fake_response.choices = [MagicMock()]
+        fake_response.choices[0].message.content = self._valid_json()
+        fake_response.model_dump = MagicMock(return_value={"vision": True})
+        fake_response.usage = None
+
+        # 精修调用始终失败
+        refine_exc = APIConnectionError.__new__(APIConnectionError)
+        refine_exc.message = "connection failed"
+
+        call_count = {"vision": 0, "refine": 0}
+        def fake_create(**kwargs):
+            if kwargs.get("model") == "refine-model":
+                call_count["refine"] += 1
+                raise refine_exc
+            call_count["vision"] += 1
+            return fake_response
+
+        client = MagicMock()
+        client.chat.completions.create = MagicMock(side_effect=fake_create)
+
+        with patch("album_assetizer.image_prep.build_data_url", return_value="data:image/jpeg;base64,"):
+            # 不应抛异常
+            parsed, text, usage_json, raw_json = call_model_with_fallback(
+                client=client, cfg=cfg, prepared=prepared,
+                capabilities=capabilities, rate_limiter=rate_limiter,
+            )
+
+        # 视觉只调用 1 次，精修调用 2 次（1 初始 + 1 重试）
+        self.assertEqual(call_count["vision"], 1)
+        self.assertEqual(call_count["refine"], 2)
+        # 返回的是未精修的视觉结果
+        self.assertEqual(parsed["caption_short"], "test")
 
     def _valid_json(self):
         import json

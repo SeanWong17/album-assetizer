@@ -220,7 +220,7 @@ def call_model_with_fallback(
     # 若配置了精修模型，对首轮结果进行文本精修（独立重试，不重做视觉请求）
     if cfg.text_refine_model:
         max_refine_retries = getattr(cfg, "max_retries", 3)
-        last_refine_exc: Exception | None = None
+        stop_event = getattr(rate_limiter, "stop_event", None) if rate_limiter else None
         for refine_attempt in range(1, max_refine_retries + 2):
             try:
                 if rate_limiter is not None:
@@ -231,13 +231,22 @@ def call_model_with_fallback(
             except Exception as exc:
                 from album_assetizer.worker import classify_exception as _classify
                 _, retryable = _classify(exc)
-                last_refine_exc = exc
                 if retryable and refine_attempt <= max_refine_retries:
                     delay = min(cfg.retry_max_seconds, cfg.retry_base_seconds * (2 ** (refine_attempt - 1)))
                     logging.warning("精修重试 %s/%s: %s", refine_attempt, max_refine_retries, exc)
-                    time.sleep(delay)
+                    if stop_event is not None:
+                        stop_event.wait(delay)
+                        if stop_event.is_set():
+                            from album_assetizer.models import StopRequested
+                            raise StopRequested("精修退避期间收到停止信号") from exc
+                    else:
+                        time.sleep(delay)
                     continue
-                raise
+                # 精修耗尽重试或不可重试：返回未精修的视觉结果，不触发外层整任务重试
+                logging.warning("精修最终失败，保留未精修结果: %s", exc)
+                raw_json = response.model_dump() if hasattr(response, "model_dump") else {}
+                usage_json = usage_to_dict(getattr(response, "usage", None))
+                break
     else:
         raw_json = response.model_dump() if hasattr(response, "model_dump") else {}
         usage_json = usage_to_dict(getattr(response, "usage", None))
