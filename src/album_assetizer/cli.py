@@ -52,10 +52,13 @@ def setup_logging(log_path: Path) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
+    from album_assetizer import __version__
+
     parser = argparse.ArgumentParser(
         prog="album-assetizer",
         description="Generate structured semantic assets from personal albums.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--root", default=".", help="相册根目录")
     parser.add_argument("--workspace-dir", default=".album-assetizer", help="工作目录（存放数据库、日志、导出文件）")
     parser.add_argument("--env-file", default=".album-assetizer/.env", help=".env 配置文件路径")
