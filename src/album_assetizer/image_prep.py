@@ -91,7 +91,7 @@ def prepare_regular_image(path: Path, cfg) -> PreparedImage:
 def prepare_livp_image(path: Path, cfg) -> PreparedImage:
     """从 LIVP zip 中提取图片并预处理。"""
     with zipfile.ZipFile(path) as zf:
-        image_name, _ = detect_livp_companion(path)
+        image_name, _ = detect_livp_companion(zf)
         with zf.open(image_name, "r") as fp:
             image_bytes = fp.read()
     image = open_image_from_bytes(image_bytes)

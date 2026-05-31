@@ -12,6 +12,7 @@ DEFAULT_MAX_IMAGE_BYTES = 8 * 1024 * 1024
 DEFAULT_JPEG_QUALITY = 88
 DEFAULT_REQUEST_TIMEOUT = 180
 DEFAULT_MAX_ATTEMPTS = 5
+DEFAULT_MAX_RETRIES = 3
 DEFAULT_RETRY_BASE = 3.0
 DEFAULT_RETRY_MAX = 90.0
 
@@ -35,6 +36,7 @@ class RuntimeConfig:
     rpm: int
     # 重试配置
     max_attempts: int
+    max_retries: int
     retry_base_seconds: float
     retry_max_seconds: float
     retry_once_immediately: bool

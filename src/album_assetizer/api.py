@@ -186,6 +186,7 @@ def call_model_with_fallback(
     cfg: RuntimeConfig,
     prepared: PreparedImage,
     capabilities: ApiCapabilities,
+    rate_limiter=None,
 ) -> tuple[dict[str, Any], str, dict[str, Any], dict[str, Any]]:
     """调用视觉模型，若 API 不支持 json_schema 则自动降级为普通 JSON 模式。"""
     from album_assetizer.image_prep import build_data_url
@@ -216,6 +217,8 @@ def call_model_with_fallback(
 
     # 若配置了精修模型，对首轮结果进行文本精修
     if cfg.text_refine_model:
+        if rate_limiter is not None:
+            rate_limiter.acquire()
         refined, _, usage_json, raw_json = call_text_refine_model(client, cfg, parsed)
         parsed = refined
     else:

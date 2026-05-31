@@ -72,6 +72,7 @@ def worker_process_asset(
                     cfg=cfg,
                     prepared=prepared,
                     capabilities=capabilities,
+                    rate_limiter=rate_limiter,
                 )
                 # 将素材来源信息附加到结果中
                 parsed["source_asset"] = {
@@ -95,13 +96,13 @@ def worker_process_asset(
                 )
             except Exception as exc:
                 error_type, retryable = classify_exception(exc)
-                if retryable and attempt < cfg.max_attempts:
+                if retryable and attempt < cfg.max_retries:
                     # 指数退避 + 抖动，避免多线程同时重试
                     delay = min(cfg.retry_max_seconds, cfg.retry_base_seconds * (2 ** (attempt - 1)))
                     jitter = min(3.0, attempt * 0.37)
                     logging.warning(
                         "可重试错误 %s (第 %s/%s 次): %s | 等待 %.1fs",
-                        asset.rel_path, attempt, cfg.max_attempts, exc, delay + jitter,
+                        asset.rel_path, attempt, cfg.max_retries, exc, delay + jitter,
                     )
                     backoff_sleep(stop_event, delay + jitter)
                     continue
@@ -157,12 +158,12 @@ def worker_refine_record(
                 )
             except Exception as exc:
                 error_type, retryable = classify_exception(exc)
-                if retryable and attempt < cfg.max_attempts:
+                if retryable and attempt < cfg.max_retries:
                     delay = min(cfg.retry_max_seconds, cfg.retry_base_seconds * (2 ** (attempt - 1)))
                     jitter = min(3.0, attempt * 0.37)
                     logging.warning(
                         "精修可重试错误 %s (第 %s/%s 次): %s | 等待 %.1fs",
-                        record.rel_path, attempt, cfg.max_attempts, exc, delay + jitter,
+                        record.rel_path, attempt, cfg.max_retries, exc, delay + jitter,
                     )
                     backoff_sleep(stop_event, delay + jitter)
                     continue

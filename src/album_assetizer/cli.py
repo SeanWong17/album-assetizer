@@ -13,6 +13,7 @@ from album_assetizer.config import (
     DEFAULT_MAX_ATTEMPTS,
     DEFAULT_MAX_IMAGE_BYTES,
     DEFAULT_MAX_IMAGE_EDGE,
+    DEFAULT_MAX_RETRIES,
     DEFAULT_MODEL,
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_RETRY_BASE,
@@ -66,7 +67,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--text-refine-model", default=None, help="可选的文本精修模型")
     parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS, help="并发工作线程数")
     parser.add_argument("--rpm", type=int, default=DEFAULT_RPM, help="每分钟最大请求数")
-    parser.add_argument("--max-attempts", type=int, default=DEFAULT_MAX_ATTEMPTS, help="单个素材最大尝试次数（跨运行累计）")
+    parser.add_argument("--max-attempts", type=int, default=DEFAULT_MAX_ATTEMPTS, help="单个素材最大调度次数（跨运行累计）")
+    parser.add_argument("--max-retries", type=int, default=DEFAULT_MAX_RETRIES, help="单次调度内 HTTP 级别最大重试次数")
     parser.add_argument("--max-image-edge", type=int, default=DEFAULT_MAX_IMAGE_EDGE, help="图片最长边缩放上限（像素）")
     parser.add_argument("--max-image-bytes", type=int, default=DEFAULT_MAX_IMAGE_BYTES, help="预处理后图片最大字节数")
     parser.add_argument("--jpeg-quality", type=int, default=DEFAULT_JPEG_QUALITY, help="JPEG 压缩质量")
@@ -143,6 +145,7 @@ def resolve_config(args: argparse.Namespace) -> RuntimeConfig:
         workers=max(1, args.workers),
         rpm=max(1, args.rpm),
         max_attempts=max(1, args.max_attempts),
+        max_retries=max(1, args.max_retries),
         max_image_edge=max(256, args.max_image_edge),
         max_image_bytes=max(256 * 1024, args.max_image_bytes),
         jpeg_quality=max(45, min(95, args.jpeg_quality)),

@@ -165,7 +165,7 @@ def extract_regular_image_metadata(path: Path) -> AssetMetadata:
 
 def extract_livp_metadata(path: Path) -> AssetMetadata:
     with zipfile.ZipFile(path) as zf:
-        image_name, _ = detect_livp_companion(path)
+        image_name, _ = detect_livp_companion(zf)
         with zf.open(image_name, "r") as fp:
             image_bytes = fp.read()
     with Image.open(io.BytesIO(image_bytes)) as image:

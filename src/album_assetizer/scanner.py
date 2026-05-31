@@ -42,9 +42,12 @@ def should_ignore_dir(path: Path, cfg) -> bool:
     return path.name in cfg.ignore_dirs
 
 
-def detect_livp_companion(zip_path: Path) -> tuple[str, str | None]:
-    """从 LIVP zip 中找到图片文件名和可选的视频文件名。"""
-    with zipfile.ZipFile(zip_path) as zf:
+def detect_livp_companion(zip_path_or_file: Path | zipfile.ZipFile) -> tuple[str, str | None]:
+    """从 LIVP zip 中找到图片文件名和可选的视频文件名。
+
+    接受 Path（自动打开）或已打开的 ZipFile 对象以避免重复 I/O。
+    """
+    def _scan(zf: zipfile.ZipFile) -> tuple[str, str | None]:
         image_name: str | None = None
         video_name: str | None = None
         for info in zf.infolist():
@@ -54,8 +57,13 @@ def detect_livp_companion(zip_path: Path) -> tuple[str, str | None]:
             if lower.endswith((".mov", ".mp4")) and video_name is None:
                 video_name = info.filename
         if image_name is None:
-            raise UnsupportedAssetError(f"LIVP zip 中未找到图片文件: {zip_path}")
+            raise UnsupportedAssetError(f"LIVP zip 中未找到图片文件: {zip_path_or_file}")
         return image_name, video_name
+
+    if isinstance(zip_path_or_file, zipfile.ZipFile):
+        return _scan(zip_path_or_file)
+    with zipfile.ZipFile(zip_path_or_file) as zf:
+        return _scan(zf)
 
 
 def iter_candidate_files(root: Path, cfg) -> Iterable[Path]:
