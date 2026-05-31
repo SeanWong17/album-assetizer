@@ -145,7 +145,7 @@ def resolve_config(args: argparse.Namespace) -> RuntimeConfig:
         workers=max(1, args.workers),
         rpm=max(1, args.rpm),
         max_attempts=max(1, args.max_attempts),
-        max_retries=max(1, args.max_retries),
+        max_retries=max(0, args.max_retries),
         max_image_edge=max(256, args.max_image_edge),
         max_image_bytes=max(256 * 1024, args.max_image_bytes),
         jpeg_quality=max(45, min(95, args.jpeg_quality)),

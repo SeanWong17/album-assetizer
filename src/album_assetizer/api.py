@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import threading
+import time
 from typing import Any, Iterable
 
 from openai import BadRequestError, OpenAI
@@ -215,12 +217,27 @@ def call_model_with_fallback(
     text = extract_text_from_response(response)
     parsed = parse_result_json(text)
 
-    # 若配置了精修模型，对首轮结果进行文本精修
+    # 若配置了精修模型，对首轮结果进行文本精修（独立重试，不重做视觉请求）
     if cfg.text_refine_model:
-        if rate_limiter is not None:
-            rate_limiter.acquire()
-        refined, _, usage_json, raw_json = call_text_refine_model(client, cfg, parsed)
-        parsed = refined
+        max_refine_retries = getattr(cfg, "max_retries", 3)
+        last_refine_exc: Exception | None = None
+        for refine_attempt in range(1, max_refine_retries + 2):
+            try:
+                if rate_limiter is not None:
+                    rate_limiter.acquire()
+                refined, _, usage_json, raw_json = call_text_refine_model(client, cfg, parsed)
+                parsed = refined
+                break
+            except Exception as exc:
+                from album_assetizer.worker import classify_exception as _classify
+                _, retryable = _classify(exc)
+                last_refine_exc = exc
+                if retryable and refine_attempt <= max_refine_retries:
+                    delay = min(cfg.retry_max_seconds, cfg.retry_base_seconds * (2 ** (refine_attempt - 1)))
+                    logging.warning("精修重试 %s/%s: %s", refine_attempt, max_refine_retries, exc)
+                    time.sleep(delay)
+                    continue
+                raise
     else:
         raw_json = response.model_dump() if hasattr(response, "model_dump") else {}
         usage_json = usage_to_dict(getattr(response, "usage", None))

@@ -97,7 +97,7 @@ def process_assets(conn: sqlite3.Connection, cfg: RuntimeConfig) -> None:
                         consecutive_errors += 1
                         # 同一次运行内立即重试一次
                         if (cfg.retry_once_immediately and result.retryable
-                                and asset.attempts < max(1, cfg.max_attempts - 1)):
+                                and asset.attempts + 1 < cfg.max_attempts):
                             requeue_asset_after_failure(conn, asset.asset_id, result)
                             retry_asset = AssetRecord(
                                 asset_id=asset.asset_id,

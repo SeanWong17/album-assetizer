@@ -261,6 +261,186 @@ class TestDetectLivpCompanion(unittest.TestCase):
             self.assertIsNone(video)
 
 
+class TestTextRefineRateLimiting(unittest.TestCase):
+    """验证 text_refine_model 启用时 rate_limiter 被 acquire 两次。"""
+
+    def test_refine_acquires_rate_limiter_separately(self):
+        """call_model_with_fallback 在精修时应额外调用一次 rate_limiter.acquire()。"""
+        from unittest.mock import MagicMock, patch, PropertyMock
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeCfg:
+            model: str = "test-model"
+            text_refine_model: str = "refine-model"
+            base_url: str = ""
+            api_key: str = "fake"
+            request_timeout: int = 30
+            max_retries: int = 3
+            retry_base_seconds: float = 0.01
+            retry_max_seconds: float = 0.1
+
+        from album_assetizer.api import call_model_with_fallback, ApiCapabilities
+        from album_assetizer.models import PreparedImage
+
+        cfg = FakeCfg()
+        prepared = PreparedImage(jpeg_bytes=b"\xff\xd8\xff", width=100, height=100,
+                                 mime_type="image/jpeg", source_note="test")
+        capabilities = ApiCapabilities()
+        rate_limiter = MagicMock()
+        rate_limiter.acquire = MagicMock()
+
+        fake_response = MagicMock()
+        fake_response.choices = [MagicMock()]
+        fake_response.choices[0].message.content = self._valid_json()
+        fake_response.model_dump = MagicMock(return_value={})
+        fake_response.usage = None
+
+        client = MagicMock()
+        client.chat.completions.create = MagicMock(return_value=fake_response)
+
+        with patch("album_assetizer.image_prep.build_data_url", return_value="data:image/jpeg;base64,"):
+            result = call_model_with_fallback(
+                client=client, cfg=cfg, prepared=prepared,
+                capabilities=capabilities, rate_limiter=rate_limiter,
+            )
+
+        # rate_limiter.acquire 应被调用至少 1 次（精修时）
+        # 注意：首次 acquire 在 worker 中调用，这里只验证精修的 acquire
+        self.assertGreaterEqual(rate_limiter.acquire.call_count, 1)
+
+    def test_no_refine_no_extra_acquire(self):
+        """text_refine_model=None 时 rate_limiter 不应被 acquire。"""
+        from unittest.mock import MagicMock, patch
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeCfg:
+            model: str = "test-model"
+            text_refine_model: str = None
+            base_url: str = ""
+            api_key: str = "fake"
+            request_timeout: int = 30
+            max_retries: int = 3
+            retry_base_seconds: float = 0.01
+            retry_max_seconds: float = 0.1
+
+        from album_assetizer.api import call_model_with_fallback, ApiCapabilities
+        from album_assetizer.models import PreparedImage
+
+        cfg = FakeCfg()
+        prepared = PreparedImage(jpeg_bytes=b"\xff\xd8\xff", width=100, height=100,
+                                 mime_type="image/jpeg", source_note="test")
+        capabilities = ApiCapabilities()
+        rate_limiter = MagicMock()
+        rate_limiter.acquire = MagicMock()
+
+        fake_response = MagicMock()
+        fake_response.choices = [MagicMock()]
+        fake_response.choices[0].message.content = self._valid_json()
+        fake_response.model_dump = MagicMock(return_value={})
+        fake_response.usage = None
+
+        client = MagicMock()
+        client.chat.completions.create = MagicMock(return_value=fake_response)
+
+        with patch("album_assetizer.image_prep.build_data_url", return_value="data:image/jpeg;base64,"):
+            call_model_with_fallback(
+                client=client, cfg=cfg, prepared=prepared,
+                capabilities=capabilities, rate_limiter=rate_limiter,
+            )
+
+        rate_limiter.acquire.assert_not_called()
+
+    def _valid_json(self):
+        import json
+        return json.dumps({
+            "caption_short": "test", "caption_long": "test long",
+            "scene": "indoor", "tags": ["a"], "main_subjects": ["b"],
+            "activities": [], "style_labels": [], "quality_flags": [],
+            "safety_flags": [], "ocr_text": "", "contains_text": False,
+            "people_count": 0, "confidence": 0.9,
+        })
+
+
+class TestMaxRetriesBoundary(unittest.TestCase):
+    """验证 max_retries 的边界语义正确。"""
+
+    def _make_cfg(self, max_retries):
+        class FakeCfg:
+            pass
+        cfg = FakeCfg()
+        cfg.model = "test"
+        cfg.text_refine_model = None
+        cfg.base_url = ""
+        cfg.api_key = "fake"
+        cfg.request_timeout = 30
+        cfg.max_retries = max_retries
+        cfg.retry_base_seconds = 0.001
+        cfg.retry_max_seconds = 0.01
+        cfg.max_attempts = 5
+        return cfg
+
+    def test_max_retries_zero_no_retry(self):
+        """max_retries=0 时失败后不重试，只有初始尝试。"""
+        from album_assetizer.worker import worker_process_asset
+        from album_assetizer.models import AssetRecord
+        from album_assetizer.api import ApiCapabilities
+
+        cfg = self._make_cfg(max_retries=0)
+        asset = AssetRecord(
+            asset_id=1, rel_path="test.jpg", abs_path=Path("/fake/test.jpg"),
+            asset_type="image", source_format="jpg", size_bytes=100,
+            mtime_ns=1, companion_video=None, status="running",
+            attempts=1, content_sig="sig",
+        )
+        stop = threading.Event()
+        rl = RateLimiter(6000, stop)
+        caps = ApiCapabilities()
+
+        call_count = {"n": 0}
+        def fake_prepare(*a, **kw):
+            call_count["n"] += 1
+            raise ConnectionError("simulated network error")
+
+        with patch("album_assetizer.worker.prepare_asset_image", side_effect=fake_prepare):
+            result = worker_process_asset(asset, cfg, rl, stop, caps)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(call_count["n"], 1)  # only initial attempt, no retries
+
+    def test_max_retries_two_gives_three_attempts(self):
+        """max_retries=2 时总共尝试 3 次（1 初始 + 2 重试）。"""
+        from album_assetizer.worker import worker_process_asset
+        from album_assetizer.models import AssetRecord
+        from album_assetizer.api import ApiCapabilities
+        from openai import APIConnectionError
+
+        cfg = self._make_cfg(max_retries=2)
+        asset = AssetRecord(
+            asset_id=1, rel_path="test.jpg", abs_path=Path("/fake/test.jpg"),
+            asset_type="image", source_format="jpg", size_bytes=100,
+            mtime_ns=1, companion_video=None, status="running",
+            attempts=1, content_sig="sig",
+        )
+        stop = threading.Event()
+        rl = RateLimiter(6000, stop)
+        caps = ApiCapabilities()
+
+        call_count = {"n": 0}
+        def fake_prepare(*a, **kw):
+            call_count["n"] += 1
+            exc = APIConnectionError.__new__(APIConnectionError)
+            exc.message = "connection failed"
+            raise exc
+
+        with patch("album_assetizer.worker.prepare_asset_image", side_effect=fake_prepare):
+            result = worker_process_asset(asset, cfg, rl, stop, caps)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(call_count["n"], 3)  # 1 initial + 2 retries
+
+
 # PLACEHOLDER_TESTS_PART2
 
 if __name__ == "__main__":
