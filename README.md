@@ -9,6 +9,9 @@
 **个人相册语义资产生成器 · 把照片变成可检索的结构化数据**
 
 <p>
+  <a href="https://github.com/ruanyf/weekly/blob/master/docs/issue-399.md">
+    <img src="https://img.shields.io/badge/科技爱好者周刊-第399期推荐-ff69b4?style=flat-square&logo=rss" alt="Tech Enthusiast Weekly">
+  </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License">
   </a>
