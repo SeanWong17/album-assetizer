@@ -141,6 +141,18 @@ A lightweight review script is included (shown in the screenshot above) for brow
 
 ---
 
+## Star History
+
+<a href="https://star-history.com/#SeanWong17/album-assetizer&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SeanWong17/album-assetizer&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=SeanWong17/album-assetizer&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=SeanWong17/album-assetizer&type=Date" />
+ </picture>
+</a>
+
+---
+
 <div align="center">
   <br>
   Made with ❤️ by <a href="https://github.com/SeanWong17">SeanWong17</a>
