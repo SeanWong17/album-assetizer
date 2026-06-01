@@ -36,11 +36,9 @@ Tens of thousands of photos on your phone, yet finding a specific one means scro
 Photos → Scan → EXIF extraction → Vision LLM annotation → Structured data assets
 ```
 
-> **👀 Want to see what the generated data can do?** The companion project [**Album Explorer**](https://github.com/SeanWong17/album-explorer) is a semantic album browser built on this project's output, offering full-text search, map view, smart clustering, timeline, similarity recommendations and more.
+> **👀 Want to see what the generated data can do?**
 >
-> <a href="https://github.com/SeanWong17/album-explorer">
->   <img src="https://img.shields.io/badge/Companion-Album_Explorer-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Album Explorer">
-> </a>
+> 👉👉👉 Companion project [**Album Explorer**](https://github.com/SeanWong17/album-explorer) — a semantic album browser built on this project's output, offering full-text search, map view, smart clustering, timeline, similarity recommendations and more.
 
 ---
 

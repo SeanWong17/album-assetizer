@@ -39,11 +39,9 @@
 照片 → 扫描 → EXIF 提取 → 视觉大模型标注 → 结构化数据资产
 ```
 
-> **👀 想看看生成的数据能做什么？** 配套项目 [**Album Explorer**](https://github.com/SeanWong17/album-explorer) 是基于本项目数据构建的相册语义浏览器，提供全文搜索、地图浏览、智能聚类、时间线、相似推荐等完整体验。
+> **👀 想看看生成的数据能做什么？**
 >
-> <a href="https://github.com/SeanWong17/album-explorer">
->   <img src="https://img.shields.io/badge/配套项目-Album_Explorer-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Album Explorer">
-> </a>
+> 👉👉👉 配套项目 [**Album Explorer**](https://github.com/SeanWong17/album-explorer) — 基于本项目数据构建的相册语义浏览器，提供全文搜索、地图浏览、智能聚类、时间线、相似推荐等完整体验。
 
 ---
 
