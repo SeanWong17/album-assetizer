@@ -39,6 +39,12 @@
 照片 → 扫描 → EXIF 提取 → 视觉大模型标注 → 结构化数据资产
 ```
 
+> **👀 想看看生成的数据能做什么？** 配套项目 [**Album Explorer**](https://github.com/SeanWong17/album-explorer) 是基于本项目数据构建的相册语义浏览器，提供全文搜索、地图浏览、智能聚类、时间线、相似推荐等完整体验。
+>
+> <a href="https://github.com/SeanWong17/album-explorer">
+>   <img src="https://img.shields.io/badge/配套项目-Album_Explorer-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Album Explorer">
+> </a>
+
 ---
 
 ## ✨ 核心特性
@@ -199,9 +205,7 @@ album-assetizer/
 
 本项目只做：**生成并沉淀高质量的相册语义资产**。
 
-项目内置了一个轻量审阅脚本（即首页截图所示），可以直观地浏览图片与生成的结构化描述，用于验证标注质量。更完整的消费场景（检索、聚类、推荐、时间线、地图可视化等）不在本项目范围内，你可以用自己熟悉的工具链来使用这些数据。
-
-> 🔗 配套项目 [**album-explorer**](https://github.com/SeanWong17/album-explorer) 是本项目的下游可视化浏览器，提供搜索、地图、聚类、时间线等多维度浏览体验。
+项目内置了一个轻量审阅脚本（即首页截图所示），可以直观地浏览图片与生成的结构化描述，用于验证标注质量。更完整的消费场景（检索、聚类、推荐、时间线、地图可视化等）由配套项目 [Album Explorer](https://github.com/SeanWong17/album-explorer) 提供。
 
 ---
 

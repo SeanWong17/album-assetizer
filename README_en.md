@@ -36,6 +36,12 @@ Tens of thousands of photos on your phone, yet finding a specific one means scro
 Photos → Scan → EXIF extraction → Vision LLM annotation → Structured data assets
 ```
 
+> **👀 Want to see what the generated data can do?** The companion project [**Album Explorer**](https://github.com/SeanWong17/album-explorer) is a semantic album browser built on this project's output, offering full-text search, map view, smart clustering, timeline, similarity recommendations and more.
+>
+> <a href="https://github.com/SeanWong17/album-explorer">
+>   <img src="https://img.shields.io/badge/Companion-Album_Explorer-4FC08D?style=flat-square&logo=vue.js&logoColor=white" alt="Album Explorer">
+> </a>
+
 ---
 
 ## Key Features
@@ -127,9 +133,7 @@ Each image produces a structured record:
 
 This project focuses solely on **generating and persisting high-quality semantic assets from photo albums**.
 
-A lightweight review script is included (shown in the screenshot above) for browsing images alongside their structured descriptions to verify annotation quality. More complete consumption scenarios (search, clustering, recommendations, timeline, map visualization) are out of scope — you can plug the data into whatever toolchain works for you.
-
-> 🔗 Companion project [**album-explorer**](https://github.com/SeanWong17/album-explorer) is a downstream visual browser for this project, offering search, map, clustering, timeline and more.
+A lightweight review script is included (shown in the screenshot above) for browsing images alongside their structured descriptions to verify annotation quality. More complete consumption scenarios (search, clustering, recommendations, timeline, map visualization) are provided by the companion project [Album Explorer](https://github.com/SeanWong17/album-explorer).
 
 ---
 
