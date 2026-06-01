@@ -129,6 +129,8 @@ This project focuses solely on **generating and persisting high-quality semantic
 
 A lightweight review script is included (shown in the screenshot above) for browsing images alongside their structured descriptions to verify annotation quality. More complete consumption scenarios (search, clustering, recommendations, timeline, map visualization) are out of scope — you can plug the data into whatever toolchain works for you.
 
+> 🔗 Companion project [**album-explorer**](https://github.com/SeanWong17/album-explorer) is a downstream visual browser for this project, offering search, map, clustering, timeline and more.
+
 ---
 
 ## License
