@@ -63,7 +63,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", default=".", help="相册根目录")
     parser.add_argument("--workspace-dir", default=".album-assetizer", help="工作目录（存放数据库、日志、导出文件）")
     parser.add_argument("--env-file", default=".album-assetizer/.env", help=".env 配置文件路径")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="视觉理解模型")
+    parser.add_argument("--model", default=None, help="视觉理解模型")
     parser.add_argument("--text-refine-model", default=None, help="可选的文本精修模型")
     parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS, help="并发工作线程数")
     parser.add_argument("--rpm", type=int, default=DEFAULT_RPM, help="每分钟最大请求数")
@@ -121,6 +121,10 @@ def resolve_config(args: argparse.Namespace) -> RuntimeConfig:
                or env_values.get("ALBUM_ASSETIZER_API_KEY") or "")
     base_url = (os.environ.get("ALBUM_ASSETIZER_BASE_URL")
                 or env_values.get("ALBUM_ASSETIZER_BASE_URL") or "")
+    model = (args.model
+             or os.environ.get("ALBUM_ASSETIZER_MODEL")
+             or env_values.get("ALBUM_ASSETIZER_MODEL")
+             or DEFAULT_MODEL)
 
     # 需要 API 的命令必须有 key
     if not api_key and args.command in {"run", "refine-done", "smoke-text", "smoke-image"}:
@@ -140,7 +144,7 @@ def resolve_config(args: argparse.Namespace) -> RuntimeConfig:
         log_path=workspace_dir / "logs" / "album_assetizer.log",
         api_key=api_key,
         base_url=base_url,
-        model=args.model,
+        model=model,
         text_refine_model=args.text_refine_model,
         workers=max(1, args.workers),
         rpm=max(1, args.rpm),
